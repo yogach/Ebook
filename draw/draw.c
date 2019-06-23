@@ -2,6 +2,8 @@
 #include "stdio.h"
 #include "disp_manager.h"
 #include <string.h>
+#include "encoding_manager.h"
+#include "config.h"
 
 
 static PT_FontOpr gUserFreeTypeFile;
@@ -10,60 +12,80 @@ static PT_EncodingOpr gUserEncodingOper;
 static int g_dwFontSize; //字体大小
 
 
-int SetTextAttr ( char HzkFile,char* FreeTypeFile,char* DisplayMode, unsigned int Size )
-{
-	int iError;
+int ShowOneFont ( PT_FontBitMap ptFontBitMap );
 
+int GetFileEncodingType(char* fileStart)
+{
+
+
+}
+
+
+
+int SetTextAttr ( char *HzkFile,char* FreeTypeFile,char* DisplayMode, unsigned int Size )
+{
+	int iError,iRet;
+    PT_FontOpr ptFontOpr,ptTmp;
 	//ptFontOpr = g_ptEncodingOprForFile->ptFontOprSupportedHead;
 
 	g_dwFontSize = Size;
 
-
-	gUserFreeTypeFile = GetFontOpr ( FreeTypeFile ); //
-	if ( NULL == gUserFreeTypeFile )
-	{
-		printf ( "GetFontOpr error\r\n" );
-
-	}
-
-	//此处为了支持不同的字库文件
-	if ( strcmp ( gUserFreeTypeFile->name, "ascii" ) == 0 )
-	{
-		iError = gUserFreeTypeFile->FontInit ( NULL, Size );
-	}
-	else if ( strcmp ( gUserFreeTypeFile->name, "gbk" ) == 0 )
-	{
-		iError = gUserFreeTypeFile->FontInit ( HzkFile, Size );
-	}
-	else
-	{
-		iError = gUserFreeTypeFile->FontInit ( FreeTypeFile, Size );
-	}
-
-	if ( iError == -1 )
-	{
-		printf ( "FontInit error\r\n" );
-	}
-
-
-	gUserDisPlayMode =  GetDispOpr ( DisplayMode );
+    /***********************/
+	gUserDisPlayMode =  GetDispOpr ( DisplayMode ); //根据显示结构体的名字得到对应结构体
 	if ( NULL == gUserDisPlayMode )
 	{
 		printf ( "GetDispOpr error\r\n" );
 		return -1;
 	}
-
-	iError =  gUserDisPlayMode.DeviceInit();
+	iError =  gUserDisPlayMode->DeviceInit();
 	if ( iError == -1 )
 	{
 		printf ( "Display init error\r\n" );
 	}
+	/***********************/
 
+    //根据文件的编码方式得到对应结构体 
 	gUserEncodingOper = SelectEncodingOprForFile ( "ascii" );
 	if ( NULL == gUserEncodingOper )
 	{
 		printf ( " SelectEncodingOpr error\r\n" );
 		return -1;
+	}
+
+    ptFontOpr = gUserEncodingOper->ptFontOprSupportedHead; //得到此编码方式能支持的点阵
+
+	
+	while (ptFontOpr)
+	{
+		if (strcmp(ptFontOpr->name, "ascii") == 0)
+		{
+			iError = ptFontOpr->FontInit(NULL, Size);
+		}
+		else if (strcmp(ptFontOpr->name, "gbk") == 0)
+		{
+			iError = ptFontOpr->FontInit(HzkFile, Size);
+		}
+		else
+		{
+			iError = ptFontOpr->FontInit(FreeTypeFile, Size);
+		}
+
+		DBG_PRINTF("%s, %d\n", ptFontOpr->name, iError);
+
+		ptTmp = ptFontOpr->ptNext;
+
+		if (iError == 0)
+		{
+			/* 比如对于ascii编码的文件, 可能用ascii字体也可能用gbk字体, 
+			 * 所以只要有一个FontInit成功, SetTextDetail最终就返回成功
+			 */
+			iRet = 0;
+		}
+		else
+		{
+			DelFontOprFrmEncoding(gUserEncodingOper, ptFontOpr);
+		}
+		ptFontOpr = ptTmp;
 	}
 
 
@@ -95,10 +117,12 @@ int ShowOnePage ( unsigned char* str )
 			/* 文件结束 */
 			if ( !bHasGetCode )
 			{
+			    printf("file end\r\n");
 				return -1;
 			}
 			else
 			{
+			    printf("GetCodeFrmBuf error\r\n");
 				return 0;
 			}
 		}
@@ -161,7 +185,7 @@ int ShowOneFont ( PT_FontBitMap ptFontBitMap )
 
 				if ( ucByte & ( 1<<bit ) ) //描点
 				{
-					g_ptDispOpr->ShowPixel ( x, y, COLOR_FOREGROUND );
+					gUserDisPlayMode->ShowPixel ( x, y, COLOR_FOREGROUND );
 				}
 				else
 				{
@@ -186,7 +210,7 @@ int ShowOneFont ( PT_FontBitMap ptFontBitMap )
 				//g_ptDispOpr->ShowPixel(x, y, ptFontBitMap->pucBuffer[i++]);
 				if ( ptFontBitMap->pucBuffer[i++] )
 				{
-					g_ptDispOpr->ShowPixel ( x, y, COLOR_FOREGROUND );
+					gUserDisPlayMode->ShowPixel ( x, y, COLOR_FOREGROUND );
 				}
 			}
 

@@ -8,7 +8,7 @@
 typedef struct EncodingOpr {
 	char *name;
 	int iHeadLen;
-	PT_FontOpr ptFontOprSupportedHead;
+	PT_FontOpr ptFontOprSupportedHead;  //支持此编码的点阵
 	int (*isSupport)(unsigned char *pucBufHead);
 	int (*GetCodeFrmBuf)(unsigned char *pucBufStart, unsigned char *pucBufEnd, unsigned int *pdwCode);
 	struct EncodingOpr *ptNext;

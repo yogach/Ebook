@@ -29,6 +29,9 @@ TARGET := show_file
 
 obj-y += main.o
 obj-y += display/
+obj-y += draw/
+obj-y += encoding/
+obj-y += fonts/
 
 
 

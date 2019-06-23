@@ -1,6 +1,0 @@
----- GetFontBitmap Matches (5 in 5 files) ----
-ascii.c (fonts) line 13 : 	.GetFontBitmap = ASCIIGetFontBitmap,
-ShowOnePage in draw.c (draw) : 			iError = gUserFreeTypeFile->GetFontBitmap ( dwCode, &tFontBitMap ); //取得字体位图
-FontOpr in fonts_manager.h (include) : 	int (*GetFontBitmap)(unsigned int dwCode, PT_FontBitMap ptFontBitMap);
-freetype.c (fonts) line 14 : 	.GetFontBitmap = FreeTypeGetFontBitmap,
-gbk.c (fonts) line 16 : 	.GetFontBitmap = GBKGetFontBitmap,
