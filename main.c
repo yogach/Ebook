@@ -16,13 +16,15 @@ int main ( int argc, char * * argv )
 	char acFreetypeFile[128];
 	char acDisplay[128];
 	char acHzkFile[128];
+    char acTextFile[128];
 	unsigned int dwFontSize = 16; //设置字符大小
 	int bList = 0;
+    
 
 	char buff[20]="天才";
 
 	//处理命令行指令
-	//指令使用例子./show_file -s 24 -d fb -f ./MSYH.TTF ./utf8_novel.txt
+	//指令使用例子./show_file -s 24 -d fb -f ./MSYH.TTF  ./utf8_novel.txt
 	while ( ( iError = getopt ( argc, argv, "ls:f:h:d:" ) ) != -1 )
 	{
 		switch ( iError )
@@ -69,13 +71,23 @@ int main ( int argc, char * * argv )
 
 	}
 
-	/*
-		if (!bList && (optind >= argc))//optind 表示选项字节之后的地址 进入此处代表没有输入要显示的文件
-		{
-			printf("Usage: %s [-s Size] [-d display] [-f font_file] [-h HZK] <text_file>\n", argv[0]);
-			printf("Usage: %s -l\n", argv[0]);
-			return -1;
-		}*/
+	
+	if (!bList && (optind >= argc))//optind 表示选项字节之后的地址 进入此处代表没有输入要处理的文件
+	{
+		printf("Usage: %s [-s Size] [-d display] [-f font_file] [-h HZK] <text_file>\n", argv[0]);
+		printf("Usage: %s -l\n", argv[0]);
+		return -1;
+	}
+
+	strncpy(acTextFile,argv[optind],128);//得到文本文件名称
+	acTextFile[127] ='\0';
+
+    iError = OpenTextFile(acTextFile);
+    if(iError)
+    {
+
+	}
+
 
 	iError = DisplayInit(); //初始化底层显示
 	if ( iError )
@@ -112,8 +124,15 @@ int main ( int argc, char * * argv )
 
 	}
 
+    
 
-	SetTextAttr (acHzkFile, acFreetypeFile,acDisplay,dwFontSize );
+
+	iError = SetTextAttr (acHzkFile, acFreetypeFile,acDisplay,dwFontSize );
+	if ( iError )
+	{
+		printf ( "SetTextAttr error!\n" );
+		return -1;
+	}
 
     ShowOnePage(buff);
 
