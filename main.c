@@ -82,13 +82,6 @@ int main ( int argc, char * * argv )
 	strncpy(acTextFile,argv[optind],128);//得到文本文件名称
 	acTextFile[127] ='\0';
 
-    iError = OpenTextFile(acTextFile);
-    if(iError)
-    {
-
-	}
-
-
 	iError = DisplayInit(); //初始化底层显示
 	if ( iError )
 	{
@@ -124,7 +117,11 @@ int main ( int argc, char * * argv )
 
 	}
 
-    
+    iError = OpenTextFile(acTextFile);
+    if(iError == -1 )
+    {
+       printf ( "OpenTextFile error\n" );
+	}
 
 
 	iError = SetTextAttr (acHzkFile, acFreetypeFile,acDisplay,dwFontSize );
@@ -140,10 +137,6 @@ int main ( int argc, char * * argv )
 
 	while ( 1 )
 	{
-
-
-
-
 
 
 

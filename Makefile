@@ -15,7 +15,7 @@ export AS LD CC CPP AR NM
 export STRIP OBJCOPY OBJDUMP
 
 CFLAGS := -Wall -O2 -g
-CFLAGS += -g -I $(shell pwd)/include 
+CFLAGS +=  -I $(shell pwd)/include 
 
 LDFLAGS := -lm -lfreetype 
 
