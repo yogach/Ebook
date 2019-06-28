@@ -31,7 +31,7 @@ static int FreeTypeFontInit(char *pcFontFile, unsigned int dwFontSize)
 		return -1;
 	}
 	
-	iError = FT_New_Face(g_tLibrary, pcFontFile, 0, &g_tFace); /* create face object */
+	iError = FT_New_Face(g_tLibrary, pcFontFile, 0, &g_tFace); //根据字库文件创建新对象
 	/* error handling omitted */
 	if (iError)
 	{

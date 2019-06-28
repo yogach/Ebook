@@ -23,7 +23,7 @@
 
 
 
-static PT_FontOpr gUserFreeTypeFile;
+//static PT_FontOpr gUserFreeTypeFile;
 static PT_DispOpr gUserDisPlayMode;
 static PT_EncodingOpr gUserEncodingOper;
 static int g_dwFontSize; //字体大小
@@ -61,7 +61,7 @@ int OpenTextFile(char* pcfileName)
 
 	 g_pucTextFileMemEnd = g_pucTextFileMem + tStat.st_size; //得到文件结尾指针
 
-	 gUserEncodingOper =  SelectEncodingOprForFile(g_pucTextFileMem);
+	 gUserEncodingOper =  SelectEncodingOprForFile(g_pucTextFileMem); //根据文件编码得到合适的编码方式 
 	 if (gUserEncodingOper)
 	 {
 		 g_pucLcdFirstPosAtFile = g_pucTextFileMem + gUserEncodingOper->iHeadLen; //得到第一个字符的位置
@@ -76,23 +76,18 @@ int OpenTextFile(char* pcfileName)
 }
 
 
-int GetFileEncodingType(char* pcfileStart)
-{
-
-
-}
 
 
 
 int SetTextAttr ( char *HzkFile,char* FreeTypeFile,char* DisplayMode, unsigned int Size )
 {
-	int iError,iRet;
+	int iError,iRet=1;
     PT_FontOpr ptFontOpr,ptTmp;
-	//ptFontOpr = g_ptEncodingOprForFile->ptFontOprSupportedHead;
+	
 
 	g_dwFontSize = Size;
 
-    /***********************/
+    /********初始化显示结构体*********/
 	gUserDisPlayMode =  GetDispOpr ( DisplayMode ); //根据显示结构体的名字得到对应结构体
 	if ( NULL == gUserDisPlayMode )
 	{
@@ -106,16 +101,8 @@ int SetTextAttr ( char *HzkFile,char* FreeTypeFile,char* DisplayMode, unsigned i
 	}
 	/***********************/
 
-/*
-    //根据文件的编码方式得到对应结构体 
-	gUserEncodingOper = SelectEncodingOprForFile ( "ascii" );
-	if ( NULL == gUserEncodingOper )
-	{
-		printf ( " SelectEncodingOpr error\r\n" );
-		return -1;
-	}
-*/
-    ptFontOpr = gUserEncodingOper->ptFontOprSupportedHead; //得到此编码方式能支持的点阵
+
+    ptFontOpr = gUserEncodingOper->ptFontOprSupportedHead; //得到此编码方式能支持的点阵-字库
 
 	
 	while (ptFontOpr)
@@ -133,7 +120,7 @@ int SetTextAttr ( char *HzkFile,char* FreeTypeFile,char* DisplayMode, unsigned i
 			iError = ptFontOpr->FontInit(FreeTypeFile, Size);
 		}
 
-		DBG_PRINTF("%s, %d\n", ptFontOpr->name, iError);
+		printf("%s, %d\n", ptFontOpr->name, iError);
 
 		ptTmp = ptFontOpr->ptNext;
 
@@ -146,12 +133,12 @@ int SetTextAttr ( char *HzkFile,char* FreeTypeFile,char* DisplayMode, unsigned i
 		}
 		else
 		{
-			DelFontOprFrmEncoding(gUserEncodingOper, ptFontOpr);
+			DelFontOprFrmEncoding(gUserEncodingOper, ptFontOpr); //如果注册不成功 删除字库
 		}
 		ptFontOpr = ptTmp;
 	}
 
-
+    retunr iRet;
 
 }
 
@@ -179,7 +166,7 @@ int ShowOnePage ( unsigned char* str )
 		if ( 0 == iLen )
 		{
 			/* 文件结束 */
-			if ( !bHasGetCode )
+			if ( bHasGetCode )//当显示过字符之后 打印文件结束
 			{
 			    printf("file end\r\n");
 				return -1;
@@ -194,13 +181,13 @@ int ShowOnePage ( unsigned char* str )
 
 		pTextStart+=iLen;
 
-		
+
+		ptFontOpr = gUserEncodingOper->ptFontOprSupportedHead;
+
 		while ( ptFontOpr )
 		{
 
-            ptFontOpr = gUserEncodingOper->ptFontOprSupportedHead;
-		
-			iError = gUserFreeTypeFile->GetFontBitmap ( dwCode, &tFontBitMap ); //取得字体位图
+           iError = ptFontOpr->GetFontBitmap ( dwCode, &tFontBitMap ); //取得字体位图
 
 			if ( iError != -1 )
 			{

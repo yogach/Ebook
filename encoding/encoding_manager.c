@@ -43,10 +43,10 @@ void ShowEncodingOpr(void)
 	}
 }
 
-//根据对应的名字找到链表中的对应节点
+//根据传入的的文本文件内容确定支持的编码格式
 PT_EncodingOpr SelectEncodingOprForFile(unsigned char *pucFileBufHead)
 {
-	PT_EncodingOpr ptTmp = g_ptEncodingOprHead;
+	PT_EncodingOpr ptTmp = g_ptEncodingOprHead; //得到EncodingOpr链表头
 
 	while (ptTmp)
 	{	

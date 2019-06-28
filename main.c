@@ -79,8 +79,7 @@ int main ( int argc, char * * argv )
 		return -1;
 	}
 
-	strncpy(acTextFile,argv[optind],128);//得到文本文件名称
-	acTextFile[127] ='\0';
+	
 
 	iError = DisplayInit(); //初始化底层显示
 	if ( iError )
@@ -115,7 +114,12 @@ int main ( int argc, char * * argv )
 		printf ( "supported Encoding:\n" );
 		ShowEncodingOpr();
 
+		return 0;
 	}
+
+
+	strncpy(acTextFile,argv[optind],128);//得到文本文件名称
+	acTextFile[127] ='\0';
 
     iError = OpenTextFile(acTextFile);
     if(iError == -1 )
