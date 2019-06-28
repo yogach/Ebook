@@ -10,21 +10,22 @@
 
 /* ./show_file [-s Size] [-f freetype_font_file] [-h HZK] <text_file> */
 
+
 int main ( int argc, char * * argv )
 {
 	int iError;
-	char acFreetypeFile[128];
+	//char acFreetypeFile[128];
 	char acDisplay[128];
 	char acHzkFile[128];
     char acTextFile[128];
-	unsigned int dwFontSize = 16; //设置字符大小
+	unsigned int dwFontSize = 16; //字符大小
 	int bList = 0;
     
 
 	char buff[20]="天才";
 
 	//处理命令行指令
-	//指令使用例子./show_file -s 24 -d fb -f ./MSYH.TTF  ./utf8_novel.txt
+	//指令使用例子./Ebook -s 24 -d fb -h ./MSYH.TTF ./utf-8.txt
 	while ( ( iError = getopt ( argc, argv, "ls:f:h:d:" ) ) != -1 )
 	{
 		switch ( iError )
@@ -40,12 +41,13 @@ int main ( int argc, char * * argv )
 				dwFontSize = strtoul ( optarg, NULL, 0 ); //字符串转unsigned long 设置字符大小
 				break;
 
-			case 'f':
-				strncpy ( acFreetypeFile, optarg, 128 ); //加载字库文件
-				break;
+			/*case 'f':
+				strncpy ( acHzkFile, optarg, 128 ); //加载字库文件
+				acHzkFile[127] = '\0';
+				break;*/
 
 			case 'h':
-				strncpy ( acHzkFile, optarg, 128 ); //获得HZK文件
+				strncpy ( acHzkFile, optarg, 128 ); //获得字库文件
 				acHzkFile[127] = '\0';
 				break;
 				break;
@@ -84,21 +86,21 @@ int main ( int argc, char * * argv )
 	iError = DisplayInit(); //初始化底层显示
 	if ( iError )
 	{
-		printf ( "DisplayInit error!\n" );
+		DBG_PRINTF ( "DisplayInit error!\n" );
 		return -1;
 	}
 
 	iError = FontsInit(); //初始化字库
 	if ( iError )
 	{
-		printf ( "FontsInit error!\n" );
+		DBG_PRINTF ( "FontsInit error!\n" );
 		return -1;
 	}
 
 	iError = EncodingInit();//初始化编码方式校验
 	if ( iError )
 	{
-		printf ( "EncodingInit error!\n" );
+		DBG_PRINTF ( "EncodingInit error!\n" );
 		return -1;
 	}
 
@@ -124,14 +126,14 @@ int main ( int argc, char * * argv )
     iError = OpenTextFile(acTextFile);
     if(iError == -1 )
     {
-       printf ( "OpenTextFile error\n" );
+       DBG_PRINTF ( "OpenTextFile error\n" );
 	}
 
 
-	iError = SetTextAttr (acHzkFile, acFreetypeFile,acDisplay,dwFontSize );
+	iError = SetTextAttr (acHzkFile, acDisplay,dwFontSize );
 	if ( iError )
 	{
-		printf ( "SetTextAttr error!\n" );
+		DBG_PRINTF ( "SetTextAttr error!\n" );
 		return -1;
 	}
 

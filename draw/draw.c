@@ -2,6 +2,7 @@
 #include "disp_manager.h"
 #include "encoding_manager.h"
 #include "config.h"
+#include "draw.h"
 
 
 #include <sys/types.h>
@@ -28,117 +29,178 @@ static PT_DispOpr gUserDisPlayMode;
 static PT_EncodingOpr gUserEncodingOper;
 static int g_dwFontSize; //字体大小
 static int g_iFdTextFile; //文件指针
-static unsigned char *g_pucTextFileMem;
-static unsigned char *g_pucTextFileMemEnd;
-static unsigned char *g_pucLcdFirstPosAtFile;//第一个字符的位置
+static unsigned char* g_pucTextFileMem;
+static unsigned char* g_pucTextFileMemEnd;
+static unsigned char* g_pucLcdFirstPosAtFile;//第一个字符的位置
 struct stat tStat;
 
-
-int ShowOneFont ( PT_FontBitMap ptFontBitMap );
-
-int OpenTextFile(char* pcfileName)
+//换行
+int LineFeed ( int lcdY )
 {
-     g_iFdTextFile = open(pcfileName,O_RDONLY); //只读方式打开文件
-     if(g_iFdTextFile < 0)
-     {
-         printf("open text file error\r\n");
-		 return -1;
-	 }
-
-	 if(fstat(g_iFdTextFile, &tStat)) //获得统计信息
-	 {
-		printf("can't get fstat\n");
-		return -1;
-	 }
-
-     //mmap把文件内容映射到一块内存
-	 g_pucTextFileMem = (unsigned char* )mmap(NULL,tStat.st_size,PROT_READ, MAP_SHARED, g_iFdTextFile, 0);
-    if (g_pucTextFileMem == (unsigned char *)-1)
+	lcdY+=g_dwFontSize;
+	if ( lcdY >gUserDisPlayMode->iYres )
 	{
-		DBG_PRINTF("can't mmap for text file\n");
+		return 0;
+	}
+	else
+	{
+		return lcdY;
+
+	}
+
+}
+
+int RelocateFontPos ( PT_FontBitMap ptFontBitMap )
+{
+	int iLcdY;
+    int iDeltaX,iDeltaY;
+
+	if ( ptFontBitMap->iYMax > gUserDisPlayMode->iYres )
+	{
 		return -1;
 	}
 
-	 g_pucTextFileMemEnd = g_pucTextFileMem + tStat.st_size; //得到文件结尾指针
+	if ( ptFontBitMap->iXMax > gUserDisPlayMode->iXres )
+	{
+		iLcdY = LineFeed ( ptFontBitMap->iNextOriginY );
+		if ( 0==iLcdY )
+		{
+			return -1;//满页了
+		}
+		else
+		{
 
-	 gUserEncodingOper =  SelectEncodingOprForFile(g_pucTextFileMem); //根据文件编码得到合适的编码方式 
-	 if (gUserEncodingOper)
-	 {
-		 g_pucLcdFirstPosAtFile = g_pucTextFileMem + gUserEncodingOper->iHeadLen; //得到第一个字符的位置
-		 return 0;
-	 }
-	 else
-	 {
-		 return -1;
-	 }
+			/* 没满页 */
+			iDeltaX = 0 - ptFontBitMap->iCurOriginX;
+			iDeltaY = iLcdY - ptFontBitMap->iCurOriginY;
 
-  
+			ptFontBitMap->iCurOriginX  += iDeltaX;
+			ptFontBitMap->iCurOriginY  += iDeltaY;
+
+			ptFontBitMap->iNextOriginX += iDeltaX;
+			ptFontBitMap->iNextOriginY += iDeltaY;
+
+			ptFontBitMap->iXLeft += iDeltaX;
+			ptFontBitMap->iXMax  += iDeltaX;
+
+			ptFontBitMap->iYTop  += iDeltaY;
+			ptFontBitMap->iYMax  += iDeltaY;
+
+			return 0;
+
+
+		}
+
+
+	}
+
+	return 0;
+
 }
 
 
 
+int OpenTextFile ( char* pcfileName )
+{
+	g_iFdTextFile = open ( pcfileName,O_RDONLY ); //只读方式打开文件
+	if ( g_iFdTextFile < 0 )
+	{
+		DBG_PRINTF ( "open text file error\r\n" );
+		return -1;
+	}
+
+	if ( fstat ( g_iFdTextFile, &tStat ) ) //获得统计信息
+	{
+		DBG_PRINTF ( "can't get fstat\n" );
+		return -1;
+	}
+
+	//mmap把文件内容映射到一块内存
+	g_pucTextFileMem = ( unsigned char* ) mmap ( NULL,tStat.st_size,PROT_READ, MAP_SHARED, g_iFdTextFile, 0 );
+	if ( g_pucTextFileMem == ( unsigned char* )-1 )
+	{
+		DBG_PRINTF ( "can't mmap for text file\n" );
+		return -1;
+	}
+
+	g_pucTextFileMemEnd = g_pucTextFileMem + tStat.st_size; //得到文件结尾指针
+
+	gUserEncodingOper =  SelectEncodingOprForFile ( g_pucTextFileMem ); //根据文件编码得到合适的编码方式
+	if ( gUserEncodingOper )
+	{
+		g_pucLcdFirstPosAtFile = g_pucTextFileMem + gUserEncodingOper->iHeadLen; //得到第一个字符的位置
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 
 
-int SetTextAttr ( char *HzkFile,char* FreeTypeFile,char* DisplayMode, unsigned int Size )
+}
+
+
+
+int SetTextAttr ( char* HzkFile,char* DisplayMode, unsigned int Size )
 {
 	int iError,iRet=1;
-    PT_FontOpr ptFontOpr,ptTmp;
-	
+	PT_FontOpr ptFontOpr,ptTmp;
 
-	g_dwFontSize = Size;
 
-    /********初始化显示结构体*********/
+	g_dwFontSize = Size; //显示字体大小
+
+	/********初始化显示*********/
 	gUserDisPlayMode =  GetDispOpr ( DisplayMode ); //根据显示结构体的名字得到对应结构体
 	if ( NULL == gUserDisPlayMode )
 	{
-		printf ( "GetDispOpr error\r\n" );
+		DBG_PRINTF ( "GetDispOpr error\r\n" );
 		return -1;
 	}
 	iError =  gUserDisPlayMode->DeviceInit();
 	if ( iError == -1 )
 	{
-		printf ( "Display init error\r\n" );
+		DBG_PRINTF ( "Display init error\r\n" );
 	}
 	/***********************/
 
 
-    ptFontOpr = gUserEncodingOper->ptFontOprSupportedHead; //得到此编码方式能支持的点阵-字库
+	ptFontOpr = gUserEncodingOper->ptFontOprSupportedHead; //得到此编码方式能支持的点阵-字库
 
-	
-	while (ptFontOpr)
+
+	while ( ptFontOpr )
 	{
-		if (strcmp(ptFontOpr->name, "ascii") == 0)
+		if ( strcmp ( ptFontOpr->name, "ascii" ) == 0 )
 		{
-			iError = ptFontOpr->FontInit(NULL, Size);
+			iError = ptFontOpr->FontInit ( NULL, Size );
 		}
-		else if (strcmp(ptFontOpr->name, "gbk") == 0)
+		else if ( strcmp ( ptFontOpr->name, "gbk" ) == 0 ) //当字符大小为16时会选用hzk16获得编码
 		{
-			iError = ptFontOpr->FontInit(HzkFile, Size);
+			iError = ptFontOpr->FontInit ( HzkFile, Size );
 		}
 		else
 		{
-			iError = ptFontOpr->FontInit(FreeTypeFile, Size);
+			iError = ptFontOpr->FontInit ( HzkFile, Size );
 		}
 
-		printf("%s, %d\n", ptFontOpr->name, iError);
+		DBG_PRINTF ( "%s, %d\n", ptFontOpr->name, iError );
 
 		ptTmp = ptFontOpr->ptNext;
 
-		if (iError == 0)
+		if ( iError == 0 )
 		{
-			/* 比如对于ascii编码的文件, 可能用ascii字体也可能用gbk字体, 
+			/* 比如对于ascii编码的文件, 可能用ascii字体也可能用gbk字体,
 			 * 所以只要有一个FontInit成功, SetTextDetail最终就返回成功
 			 */
 			iRet = 0;
 		}
 		else
 		{
-			DelFontOprFrmEncoding(gUserEncodingOper, ptFontOpr); //如果注册不成功 删除字库
+			DelFontOprFrmEncoding ( gUserEncodingOper, ptFontOpr ); //删除初始化不成功的字库节点
 		}
 		ptFontOpr = ptTmp;
 	}
 
-    retunr iRet;
+	return iRet;
 
 }
 
@@ -152,28 +214,31 @@ int ShowOnePage ( unsigned char* str )
 	T_FontBitMap tFontBitMap;
 	int bHasGetCode = 0;
 	PT_FontOpr ptFontOpr;
-    unsigned char *pTextStart;
-	
-    tFontBitMap.iCurOriginX = 0;
-	tFontBitMap.iCurOriginY = g_dwFontSize;
-    
-    pTextStart = g_pucLcdFirstPosAtFile;
+	unsigned char* pTextStart;
 
-    //一次只能处理一个字节
+	tFontBitMap.iCurOriginX = 0;
+	tFontBitMap.iCurOriginY = g_dwFontSize;
+
+	pTextStart = g_pucLcdFirstPosAtFile;
+
+	//一次只能处理一个字节
 	while ( 1 )
 	{
+
+
 		iLen = gUserEncodingOper->GetCodeFrmBuf ( pTextStart, g_pucTextFileMemEnd, &dwCode );//取得编码
+		DBG_PRINTF ( "dwCode : %d\r\n",dwCode );
 		if ( 0 == iLen )
 		{
 			/* 文件结束 */
-			if ( bHasGetCode )//当显示过字符之后 打印文件结束
+			if ( bHasGetCode ) //当显示字符之后 进入此处 判断文件結束后
 			{
-			    printf("file end\r\n");
+				DBG_PRINTF ( "file end\r\n" );
 				return -1;
 			}
 			else
 			{
-			    printf("GetCodeFrmBuf error\r\n");
+				DBG_PRINTF ( "GetCodeFrmBuf error\r\n" );
 				return 0;
 			}
 		}
@@ -181,17 +246,51 @@ int ShowOnePage ( unsigned char* str )
 
 		pTextStart+=iLen;
 
+		if ( dwCode =='\r' ) //如果读取到的是回车换行符的话
+		{
+			continue;
+		}
+		else if ( dwCode =='\n' )
+		{
+			//换行
+			tFontBitMap.iCurOriginX = 0;
+			tFontBitMap.iCurOriginY = LineFeed ( tFontBitMap.iCurOriginY );
+
+			if ( tFontBitMap.iCurOriginY == 0 )
+			{
+				return 0;  //当前页已显示完毕
+			}
+			else
+			{
+				continue;
+			}
+
+		}
+		else if ( dwCode == '\t' )
+		{
+			/* TAB键用一个空格代替 */
+			dwCode = ' ';
+		}
+
+
 
 		ptFontOpr = gUserEncodingOper->ptFontOprSupportedHead;
 
 		while ( ptFontOpr )
 		{
 
-           iError = ptFontOpr->GetFontBitmap ( dwCode, &tFontBitMap ); //取得字体位图
+			iError = ptFontOpr->GetFontBitmap ( dwCode, &tFontBitMap ); //取得字体位图
+
+
+			//判断接下来显示的字符是否能在一行内显示
+			if ( RelocateFontPos ( &tFontBitMap )!=0 )
+			{
+                return 0;  //当前页已显示完毕
+			}
 
 			if ( iError != -1 )
 			{
-				if ( bHasNotClrSceen )
+				if ( bHasNotClrSceen ) //显示新一页时执行清屏
 				{
 					/* 首先清屏 */
 					gUserDisPlayMode->CleanScreen ( COLOR_BACKGROUND );
@@ -200,19 +299,19 @@ int ShowOnePage ( unsigned char* str )
 
 				ShowOneFont ( &tFontBitMap );
 			}
-			
+
 			tFontBitMap.iCurOriginX = tFontBitMap.iNextOriginX; //下一个显示字符位置
 			tFontBitMap.iCurOriginY = tFontBitMap.iNextOriginY;
 
-            ptFontOpr= ptFontOpr->ptNext;
-			
+			ptFontOpr= ptFontOpr->ptNext;
+
 		}
 	}
 
 }
 
 
-
+//显示函数
 int ShowOneFont ( PT_FontBitMap ptFontBitMap )
 {
 	int y;
@@ -269,7 +368,7 @@ int ShowOneFont ( PT_FontBitMap ptFontBitMap )
 	}
 	else
 	{
-		printf ( "ShowOneFont error, can't support %d bpp\n", ptFontBitMap->iBpp );
+		DBG_PRINTF ( "ShowOneFont error, can't support %d bpp\n", ptFontBitMap->iBpp );
 	}
 
 

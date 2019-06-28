@@ -24,7 +24,7 @@ export CFLAGS LDFLAGS
 TOPDIR := $(shell pwd)
 export TOPDIR
 
-TARGET := show_file
+TARGET := Ebook
 
 
 obj-y += main.o
