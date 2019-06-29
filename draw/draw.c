@@ -32,7 +32,8 @@ static int g_iFdTextFile; //文件指针
 static unsigned char* g_pucTextFileMem;
 static unsigned char* g_pucTextFileMemEnd;
 static unsigned char* g_pucLcdFirstPosAtFile;//第一个字符的位置
-struct stat tStat;
+static struct stat tStat;
+static unsigned char FirstDis;
 
 //换行
 int LineFeed ( int lcdY )
@@ -57,7 +58,7 @@ int RelocateFontPos ( PT_FontBitMap ptFontBitMap )
 
 	if ( ptFontBitMap->iYMax > gUserDisPlayMode->iYres )
 	{
-		return -1;
+		return -1; //满页了
 	}
 
 	if ( ptFontBitMap->iXMax > gUserDisPlayMode->iXres )
@@ -204,10 +205,32 @@ int SetTextAttr ( char* HzkFile,char* DisplayMode, unsigned int Size )
 
 }
 
-
-int ShowOnePage ( unsigned char* str )
+int ShowNextPage(void)
 {
-	int bHasNotClrSceen = 1;
+   unsigned char *pucTextFileMemCurPos; //当前页的起始位置
+
+   if()
+   {
+     
+   }
+   else
+   {
+
+   }
+
+   pucTextFileMemCurPos = g_pucLcdFirstPosAtFile;
+
+
+
+   ShowOnePage(pucTextFileMemCurPos);
+
+}
+
+
+//显示一页电子书内容，直到满页或者文本文件结束才会退出
+int ShowOnePage ( unsigned char* Position )
+{
+	int bHasNotClrSceen = 1; //一页清字符标志
 	int iError;
 	int iLen;
 	unsigned int dwCode;
@@ -219,12 +242,11 @@ int ShowOnePage ( unsigned char* str )
 	tFontBitMap.iCurOriginX = 0;
 	tFontBitMap.iCurOriginY = g_dwFontSize;
 
-	pTextStart = g_pucLcdFirstPosAtFile;
+	pTextStart = Position;//g_pucLcdFirstPosAtFile;
 
 	//一次只能处理一个字节
 	while ( 1 )
 	{
-
 
 		iLen = gUserEncodingOper->GetCodeFrmBuf ( pTextStart, g_pucTextFileMemEnd, &dwCode );//取得编码
 		DBG_PRINTF ( "dwCode : %d\r\n",dwCode );
@@ -244,7 +266,7 @@ int ShowOnePage ( unsigned char* str )
 		}
 		bHasGetCode = 1;
 
-		pTextStart+=iLen;
+		pTextStart+=iLen; 
 
 		if ( dwCode =='\r' ) //如果读取到的是回车换行符的话
 		{
@@ -288,7 +310,7 @@ int ShowOnePage ( unsigned char* str )
                 return 0;  //当前页已显示完毕
 			}
 
-			if ( iError != -1 )
+			if ( iError != -1 ) //位图取得成功才执行显示
 			{
 				if ( bHasNotClrSceen ) //显示新一页时执行清屏
 				{
@@ -297,11 +319,15 @@ int ShowOnePage ( unsigned char* str )
 					bHasNotClrSceen = 0;
 				}
 
-				ShowOneFont ( &tFontBitMap );
-			}
+				if(ShowOneFont ( &tFontBitMap )==-1)
+				{
+                  return -1;
+				}
+				tFontBitMap.iCurOriginX = tFontBitMap.iNextOriginX; //显示成功后确定下一个显示字符位置
+				tFontBitMap.iCurOriginY = tFontBitMap.iNextOriginY;
 
-			tFontBitMap.iCurOriginX = tFontBitMap.iNextOriginX; //下一个显示字符位置
-			tFontBitMap.iCurOriginY = tFontBitMap.iNextOriginY;
+				break; //跳出循环
+			}			
 
 			ptFontOpr= ptFontOpr->ptNext;
 
@@ -369,8 +395,10 @@ int ShowOneFont ( PT_FontBitMap ptFontBitMap )
 	else
 	{
 		DBG_PRINTF ( "ShowOneFont error, can't support %d bpp\n", ptFontBitMap->iBpp );
+		return -1;
 	}
 
+  return 0;
 
 
 

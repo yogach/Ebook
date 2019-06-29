@@ -17,10 +17,10 @@ int main ( int argc, char * * argv )
 	//char acFreetypeFile[128];
 	char acDisplay[128];
 	char acHzkFile[128];
-    char acTextFile[128];
+	char acTextFile[128];
 	unsigned int dwFontSize = 16; //字符大小
 	int bList = 0;
-    
+
 
 	char buff[20]="天才";
 
@@ -73,15 +73,15 @@ int main ( int argc, char * * argv )
 
 	}
 
-	
-	if (!bList && (optind >= argc))//optind 表示选项字节之后的地址 进入此处代表没有输入要处理的文件
+
+	if ( !bList && ( optind >= argc ) ) //optind 表示选项字节之后的地址 进入此处代表没有输入要处理的文件
 	{
-		printf("Usage: %s [-s Size] [-d display] [-f font_file] [-h HZK] <text_file>\n", argv[0]);
-		printf("Usage: %s -l\n", argv[0]);
+		printf ( "Usage: %s [-s Size] [-d display] [-f font_file] [-h HZK] <text_file>\n", argv[0] );
+		printf ( "Usage: %s -l\n", argv[0] );
 		return -1;
 	}
 
-	
+
 
 	iError = DisplayInit(); //初始化底层显示
 	if ( iError )
@@ -120,30 +120,40 @@ int main ( int argc, char * * argv )
 	}
 
 
-	strncpy(acTextFile,argv[optind],128);//得到文本文件名称
+	strncpy ( acTextFile,argv[optind],128 ); //得到文本文件名称
 	acTextFile[127] ='\0';
 
-    iError = OpenTextFile(acTextFile);
-    if(iError == -1 )
-    {
-       DBG_PRINTF ( "OpenTextFile error\n" );
+	iError = OpenTextFile ( acTextFile );
+	if ( iError == -1 )
+	{
+		DBG_PRINTF ( "OpenTextFile error\n" );
 	}
 
 
-	iError = SetTextAttr (acHzkFile, acDisplay,dwFontSize );
+	iError = SetTextAttr ( acHzkFile, acDisplay,dwFontSize );
 	if ( iError )
 	{
 		DBG_PRINTF ( "SetTextAttr error!\n" );
 		return -1;
 	}
 
-    ShowOnePage(buff);
-
+	//ShowOnePage(buff);
+	ShowNextPage();
 
 
 	while ( 1 )
 	{
+	    char cOpr = 0;
+		printf ( "Enter 'n' to show next page, 'u' to show previous page, 'q' to exit: " );
 
+		do
+		{
+			cOpr = getchar();
+		}
+		while ( ( cOpr != 'n' ) && ( cOpr != 'u' ) && ( cOpr != 'q' ) );
+
+        if(cOpr == 'q')
+           return 0;
 
 
 
