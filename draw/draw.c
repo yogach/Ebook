@@ -211,14 +211,14 @@ int ShowNextPage(void)
 
    if()
    {
-     
+     pucTextFileMemCurPos = g_pucLcdFirstPosAtFile;
    }
    else
    {
-
+     pucTextFileMemCurPos = ;
    }
 
-   pucTextFileMemCurPos = g_pucLcdFirstPosAtFile;
+   
 
 
 
