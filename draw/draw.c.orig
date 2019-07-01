@@ -29,10 +29,18 @@ static PT_DispOpr gUserDisPlayMode;
 static PT_EncodingOpr gUserEncodingOper;
 static int g_dwFontSize; //字体大小
 static int g_iFdTextFile; //文件指针
-static unsigned char* g_pucTextFileMem;
-static unsigned char* g_pucTextFileMemEnd;
+static unsigned char* g_pucTextFileMem;  //文本文件起始位置
+static unsigned char* g_pucTextFileMemEnd;//文本文件结束位置
 static unsigned char* g_pucLcdFirstPosAtFile;//第一个字符的位置
-struct stat tStat;
+static struct stat tStat;
+static unsigned char FirstDis;
+
+static PT_PageDesc g_ptCurPage; //当前页面
+static PT_PageDesc g_ptPageHead;
+
+//static unsigned char* g_pucCurPageStart; //当前显示页面的起始地址
+static unsigned char* g_pucNextPageStart;//当前显示页面的结束地址
+
 
 //换行
 int LineFeed ( int lcdY )
@@ -44,57 +52,57 @@ int LineFeed ( int lcdY )
 	}
 	else
 	{
-		retunr lcdY;
+		return lcdY;
 
 	}
 
 }
 
-int RelocateFontPos(PT_FontBitMap ptFontBitMap)
+int RelocateFontPos ( PT_FontBitMap ptFontBitMap )
 {
-   int iLcdY;
+	int iLcdY;
+	int iDeltaX,iDeltaY;
 
-   if(ptFontBitMap->iYMax > gUserDisPlayMode->iYres)
-   	 return -1;
+	if ( ptFontBitMap->iYMax > gUserDisPlayMode->iYres )
+	{
+		return -1; //满页了
+	}
 
-   if(ptFontBitMap->iXMax > gUserDisPlayMode->iXres)
-   {
-     iLcdY = LineFeed(ptFontBitMap->iNextOriginY);
-	 if(0==iLcdY)
-	 {
-       return -1;//满页了
-	 }
-	 else
-	 	{
+	if ( ptFontBitMap->iXMax > gUserDisPlayMode->iXres )
+	{
+		iLcdY = LineFeed ( ptFontBitMap->iNextOriginY );
+		if ( 0==iLcdY )
+		{
+			return -1;//满页了
+		}
+		else
+		{
 
-		/* 没满页 */
-		iDeltaX = 0 - ptFontBitMap->iCurOriginX;
-		iDeltaY = iLcdY - ptFontBitMap->iCurOriginY;
-		
-		ptFontBitMap->iCurOriginX  += iDeltaX;
-		ptFontBitMap->iCurOriginY  += iDeltaY;
-		
-		ptFontBitMap->iNextOriginX += iDeltaX;
-		ptFontBitMap->iNextOriginY += iDeltaY;
-		
-		ptFontBitMap->iXLeft += iDeltaX;
-		ptFontBitMap->iXMax  += iDeltaX;
-		
-		ptFontBitMap->iYTop  += iDeltaY;
-		ptFontBitMap->iYMax  += iDeltaY;
+			/* 没满页 */
+			iDeltaX = 0 - ptFontBitMap->iCurOriginX;
+			iDeltaY = iLcdY - ptFontBitMap->iCurOriginY;
 
+			ptFontBitMap->iCurOriginX  += iDeltaX;
+			ptFontBitMap->iCurOriginY  += iDeltaY;
 
+			ptFontBitMap->iNextOriginX += iDeltaX;
+			ptFontBitMap->iNextOriginY += iDeltaY;
 
-	 }
-  
+			ptFontBitMap->iXLeft += iDeltaX;
+			ptFontBitMap->iXMax  += iDeltaX;
 
+			ptFontBitMap->iYTop  += iDeltaY;
+			ptFontBitMap->iYMax  += iDeltaY;
 
-
-   }
+			return 0;
 
 
+		}
 
 
+	}
+
+	return 0;
 
 }
 
@@ -204,10 +212,113 @@ int SetTextAttr ( char* HzkFile,char* DisplayMode, unsigned int Size )
 
 }
 
-
-int ShowOnePage ( unsigned char* str )
+void PutInPageList ( PT_PageDesc P_PageNew )
 {
-	int bHasNotClrSceen = 1;
+	PT_PageDesc P_PageNode;
+
+	if ( !g_ptPageHead )
+	{
+		P_PageNew->PageNum = 1;
+		g_ptPageHead = P_PageNew;
+
+	}
+	else
+	{
+		P_PageNode = g_ptPageHead;
+		while ( P_PageNode->nextPageDesc ) //找到链表的终点
+		{
+			P_PageNode = P_PageNode->nextPageDesc;
+		}
+
+		P_PageNew->PageNum = P_PageNode->PageNum+1;
+		P_PageNode->nextPageDesc = P_PageNew; //将新节点放入链表的末尾
+		P_PageNew->prePageDesc = P_PageNode;	 //将最后第二个节点链接为最后一个节点的前一个节点
+	}
+
+
+
+}
+
+
+int ShowNextPage ( void )
+{
+	unsigned char* pucTextFileMemCurPos; //当前页的起始位置
+	PT_PageDesc P_PageNode;
+	int iError;
+
+	if ( g_ptPageHead )
+	{
+		pucTextFileMemCurPos = g_ptPageHead->CurPageStart;
+	}
+	else
+	{
+		pucTextFileMemCurPos = g_pucLcdFirstPosAtFile;
+	}
+
+	iError = ShowOnePage ( pucTextFileMemCurPos ); //显示一页内容
+
+	if ( iError == 0 ) //等于0代表当前页显示完毕
+	{
+		if ( ! ( g_ptPageHead&&g_ptPageHead->nextPageDesc ) )
+		{
+
+			P_PageNode = ( PT_PageDesc )  malloc ( T_PageDesc );
+
+			if ( P_PageNode )
+			{
+				P_PageNode->CurPageStart = pucTextFileMemCurPos;
+				P_PageNode->NextPageStart = g_pucNextPageStart;
+				P_PageNode->nextPageDesc = NULL;
+				P_PageNode->prePageDesc  = NULL;
+
+				g_ptPageHead = P_PageNode;
+				PutInPageList ( g_ptPageHead ); //放入页链表中
+			}
+			else
+			{
+				printf ( "malloc PageDesc error\r\n" );
+				return -1;
+
+			}
+
+		}
+		else
+		{
+			g_ptPageHead = g_ptPageHead->nextPageDesc;
+		}
+
+
+	}
+
+
+
+}
+
+int ShowPrePage ( void )
+{
+    int iError;
+
+	if ( ( !g_ptPageHead ||! ( g_ptPageHead->prePageDesc ) ) )
+	{
+		return -1;
+
+	}
+
+    iError = ShowOnePage(g_ptPageHead->prePageDesc->CurPageStart);
+	
+    if(iError == 0)
+    	{
+
+
+	}
+
+}
+
+
+//显示一页电子书内容，直到满页或者文本文件结束才会退出
+int ShowOnePage ( unsigned char* Position )
+{
+	int bHasNotClrSceen = 1; //一页清字符标志
 	int iError;
 	int iLen;
 	unsigned int dwCode;
@@ -219,27 +330,27 @@ int ShowOnePage ( unsigned char* str )
 	tFontBitMap.iCurOriginX = 0;
 	tFontBitMap.iCurOriginY = g_dwFontSize;
 
-	pTextStart = g_pucLcdFirstPosAtFile;
+	pTextStart = Position;//g_pucLcdFirstPosAtFile;
 
 	//一次只能处理一个字节
 	while ( 1 )
 	{
 
-
-		iLen = gUserEncodingOper->GetCodeFrmBuf ( pTextStart, g_pucTextFileMemEnd, &dwCode );//取得编码
+		iLen = gUserEncodingOper->GetCodeFrmBuf ( pTextStart, g_pucTextFileMemEnd, &dwCode );//取得对应字体编码
 		DBG_PRINTF ( "dwCode : %d\r\n",dwCode );
 		if ( 0 == iLen )
 		{
 			/* 文件结束 */
 			if ( bHasGetCode ) //当显示字符之后 进入此处 判断文件結束后
 			{
+				g_pucNextPageStart = pTextStart;
 				DBG_PRINTF ( "file end\r\n" );
-				return -1;
+				return 0;
 			}
 			else
 			{
 				DBG_PRINTF ( "GetCodeFrmBuf error\r\n" );
-				return 0;
+				return -1;
 			}
 		}
 		bHasGetCode = 1;
@@ -252,13 +363,14 @@ int ShowOnePage ( unsigned char* str )
 		}
 		else if ( dwCode =='\n' )
 		{
-		    //换行
+			//换行
 			tFontBitMap.iCurOriginX = 0;
-			tFontBitMap.iCurOriginY = LineFeed ( tFontBitMap.iCurOriginY )
+			tFontBitMap.iCurOriginY = LineFeed ( tFontBitMap.iCurOriginY );
 
 			if ( tFontBitMap.iCurOriginY == 0 )
 			{
-				return -1;  //当前页已显示完毕
+				g_pucNextPageStart = pTextStart;
+				return 0;  //当前页已显示完毕
 			}
 			else
 			{
@@ -283,12 +395,13 @@ int ShowOnePage ( unsigned char* str )
 
 
 			//判断接下来显示的字符是否能在一行内显示
-			if ( RelocateFontPos(&tFontBitMap) )
+			if ( RelocateFontPos ( &tFontBitMap ) !=0 )
 			{
-			
+
+				return 0;  //当前页已显示完毕
 			}
 
-			if ( iError != -1 )
+			if ( iError != -1 ) //位图取得成功才执行显示
 			{
 				if ( bHasNotClrSceen ) //显示新一页时执行清屏
 				{
@@ -297,11 +410,15 @@ int ShowOnePage ( unsigned char* str )
 					bHasNotClrSceen = 0;
 				}
 
-				ShowOneFont ( &tFontBitMap );
-			}
+				if ( ShowOneFont ( &tFontBitMap ) ==-1 )
+				{
+					return -1;
+				}
+				tFontBitMap.iCurOriginX = tFontBitMap.iNextOriginX; //显示成功后确定下一个显示字符位置
+				tFontBitMap.iCurOriginY = tFontBitMap.iNextOriginY;
 
-			tFontBitMap.iCurOriginX = tFontBitMap.iNextOriginX; //下一个显示字符位置
-			tFontBitMap.iCurOriginY = tFontBitMap.iNextOriginY;
+				break; //跳出循环
+			}
 
 			ptFontOpr= ptFontOpr->ptNext;
 
@@ -369,8 +486,10 @@ int ShowOneFont ( PT_FontBitMap ptFontBitMap )
 	else
 	{
 		DBG_PRINTF ( "ShowOneFont error, can't support %d bpp\n", ptFontBitMap->iBpp );
+		return -1;
 	}
 
+	return 0;
 
 
 

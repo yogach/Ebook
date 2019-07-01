@@ -22,10 +22,9 @@ int main ( int argc, char * * argv )
 	int bList = 0;
 
 
-	char buff[20]="天才";
 
 	//处理命令行指令
-	//指令使用例子./Ebook -s 24 -d fb -h ./MSYH.TTF ./utf-8.txt
+	//指令使用例子./Ebook -s 24 -d fb -h ./MSYH.TTF ./utf8_novel.txt
 	while ( ( iError = getopt ( argc, argv, "ls:f:h:d:" ) ) != -1 )
 	{
 		switch ( iError )
@@ -143,7 +142,7 @@ int main ( int argc, char * * argv )
 
 	while ( 1 )
 	{
-	    char cOpr = 0;
+		char cOpr = 0;
 		printf ( "Enter 'n' to show next page, 'u' to show previous page, 'q' to exit: " );
 
 		do
@@ -152,8 +151,20 @@ int main ( int argc, char * * argv )
 		}
 		while ( ( cOpr != 'n' ) && ( cOpr != 'u' ) && ( cOpr != 'q' ) );
 
-        if(cOpr == 'q')
-           return 0;
+		if ( cOpr == 'n' )
+		{
+			ShowNextPage();
+		}
+		else if ( cOpr == 'u' )
+		{
+			ShowPrePage();
+		}
+		else
+		{
+			return 0;
+		}
+
+
 
 
 
