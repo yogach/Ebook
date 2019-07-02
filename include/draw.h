@@ -20,6 +20,7 @@ int OpenTextFile(char* pcfileName);
 int ShowOneFont ( PT_FontBitMap ptFontBitMap );
 int ShowNextPage(void);
 int ShowPrePage ( void );
+int showPointPage ( int pageNum );
 
 
 #endif /* _DRAW_H */

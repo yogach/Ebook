@@ -218,7 +218,7 @@ void PutInPageList ( PT_PageDesc P_PageNew )
 
 	if ( !g_ptPageHead )
 	{
-		P_PageNew->PageNum = 1;
+		P_PageNew->PageNum = 1; //记录页码
 		g_ptPageHead = P_PageNew;
 
 	}
@@ -231,14 +231,46 @@ void PutInPageList ( PT_PageDesc P_PageNew )
 		}
 
 		P_PageNew->PageNum = P_PageNode->PageNum+1;
+		
 		P_PageNode->nextPageDesc = P_PageNew; //将新节点放入链表的末尾
 		P_PageNew->prePageDesc = P_PageNode;	 //将最后第二个节点链接为最后一个节点的前一个节点
 	}
 
-
+    DBG_PRINTF ( "Cur Paga Num:%d\r\n",P_PageNew->PageNum );
 
 }
 
+int showPointPage ( int pageNum )
+{
+   
+	int iError;
+	PT_PageDesc P_PageNode;
+
+	P_PageNode = g_ptPageHead;
+
+	
+	while ( P_PageNode)
+	{
+		if ( P_PageNode->PageNum == pageNum )
+		{
+			break; //跳出循环
+		}
+
+		P_PageNode = P_PageNode->nextPageDesc;
+	}
+
+	iError = ShowOnePage ( P_PageNode->CurPageStart );
+
+	if ( iError == 0 )
+	{
+		g_ptCurPage = P_PageNode;
+
+
+	}
+
+	return 0;
+
+}
 
 int ShowNextPage ( void )
 {
@@ -262,7 +294,7 @@ int ShowNextPage ( void )
 		if ( ! ( g_ptCurPage&&g_ptCurPage->nextPageDesc ) )
 		{
 
-			P_PageNode = ( PT_PageDesc )  malloc ( sizeof(T_PageDesc) );
+			P_PageNode = ( PT_PageDesc )  malloc ( sizeof ( T_PageDesc ) );
 
 			if ( P_PageNode )
 			{
@@ -289,9 +321,6 @@ int ShowNextPage ( void )
 
 
 	}
-
-
-
 }
 
 int ShowPrePage ( void )
@@ -308,8 +337,8 @@ int ShowPrePage ( void )
 
 	if ( iError == 0 )
 	{
-        g_ptCurPage = g_ptCurPage->prePageDesc;
-	  
+		g_ptCurPage = g_ptCurPage->prePageDesc;
+
 
 	}
 
@@ -339,7 +368,7 @@ int ShowOnePage ( unsigned char* Position )
 	{
 
 		iLen = gUserEncodingOper->GetCodeFrmBuf ( pTextStart, g_pucTextFileMemEnd, &dwCode );//取得对应字体编码
-		DBG_PRINTF ( "dwCode : %d\r\n",dwCode );
+		//DBG_PRINTF ( "dwCode : %d\r\n",dwCode );
 		if ( 0 == iLen )
 		{
 			/* 文件结束 */
@@ -399,7 +428,7 @@ int ShowOnePage ( unsigned char* Position )
 			//判断接下来显示的字符是否能在一行内显示
 			if ( RelocateFontPos ( &tFontBitMap ) !=0 )
 			{
-                g_pucNextPageStart = pTextStart;
+				g_pucNextPageStart = pTextStart;
 				return 0;  //当前页已显示完毕
 			}
 
@@ -420,7 +449,7 @@ int ShowOnePage ( unsigned char* Position )
 				tFontBitMap.iCurOriginY = tFontBitMap.iNextOriginY;
 				//pucNextPageStart = pTextStart;
 
-				
+
 				break; //跳出循环
 			}
 

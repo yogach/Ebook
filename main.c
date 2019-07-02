@@ -143,13 +143,14 @@ int main ( int argc, char * * argv )
 	while ( 1 )
 	{
 		char cOpr = 0;
-		printf ( "Enter 'n' to show next page, 'u' to show previous page, 'q' to exit: " );
+		int pageNum =0;
+		printf ( "Enter 'n' to show next page, 'u' to show previous page, 'q' to exit, 't' to jump: \r\n" );
 
 		do
 		{
 			cOpr = getchar();
 		}
-		while ( ( cOpr != 'n' ) && ( cOpr != 'u' ) && ( cOpr != 'q' ) );
+		while ( ( cOpr != 'n' ) && ( cOpr != 'u' ) && ( cOpr != 'q' )&&( cOpr != 't' ) );
 
 		if ( cOpr == 'n' )
 		{
@@ -158,6 +159,13 @@ int main ( int argc, char * * argv )
 		else if ( cOpr == 'u' )
 		{
 			ShowPrePage();
+		}
+		else if(cOpr == 't')
+		{
+           printf ( "please input pagenum of Just shown\r\n" );
+           scanf("%d",&pageNum);
+		   showPointPage(pageNum);
+
 		}
 		else
 		{
