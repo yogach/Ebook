@@ -17,7 +17,7 @@ export STRIP OBJCOPY OBJDUMP
 CFLAGS := -Wall -O2 -g
 CFLAGS +=  -I $(shell pwd)/include 
 
-LDFLAGS := -lm -lfreetype 
+LDFLAGS := -lm -lfreetype -lpthread
 
 export CFLAGS LDFLAGS
 
@@ -32,7 +32,7 @@ obj-y += display/
 obj-y += draw/
 obj-y += encoding/
 obj-y += fonts/
-
+obj-y += Input/
 
 
 all : 
