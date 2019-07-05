@@ -34,6 +34,7 @@ int RegisterInputOpr(PT_InputOpr ptInputOpr)
 	return 0;
 }
 
+//线程函数
 static void* InputEventTreadFunction(void* pVoid)
 {
    T_InputEvent tInputEvent;
@@ -48,7 +49,7 @@ static void* InputEventTreadFunction(void* pVoid)
 
    while(1)
    {
-         if( 0 == GetInputEvent(&tInputEvent))
+         if( 0 == GetInputEvent(&tInputEvent)) //等待输入事件
          {
 			 /* 唤醒主线程, 把tInputEvent的值赋给一个全局变量 */
 			 /* 访问临界资源前，先获得互斥量 */
@@ -79,13 +80,11 @@ int AllInputDevicesInit(void)
 	while (ptTmp)
 	{
        if(g_ptInputOprHead->DeviceInit() == 0)
-       	{
+       {
        	   //创建线程 将各设备的GetInputEvent 作为形参传入
 		   pthread_create(&g_ptInputOprHead->tTreadID,NULL,InputEventTreadFunction,ptTmp->GetInputEvent);
-            iError = 0;
+           iError = 0;
 	   }
-
-	
 	   ptTmp = ptTmp->ptNext;
 	}
 
@@ -93,7 +92,7 @@ int AllInputDevicesInit(void)
 }
 
 
-
+//获取输入事件
 int GetDeviceInput(PT_InputEvent ptInputEvent)
 {
 

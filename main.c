@@ -140,40 +140,40 @@ int main ( int argc, char * * argv )
 	ShowNextPage();
 
 
+	printf ( "Enter 'n' to show next page, 'u' to show previous page, 'q' to exit, 't' to jump: \r\n" );
+
+
 	while ( 1 )
 	{
-		char cOpr = 0;
-		int pageNum =0;
-		printf ( "Enter 'n' to show next page, 'u' to show previous page, 'q' to exit, 't' to jump: \r\n" );
 
-		do
-		{
-			cOpr = getchar();
-		}
-		while ( ( cOpr != 'n' ) && ( cOpr != 'u' ) && ( cOpr != 'q' )&&( cOpr != 't' ) );
+	    PT_InputEvent InputEvent;
+		
+        if(GetDeviceInput(InputEvent) == 0)
+        {
+			if ( InputEvent->iAction == 'n' )
+			{
+				ShowNextPage();
+			}
+			else if ( InputEvent->iAction == 'u' )
+			{
+				ShowPrePage();
+			}
+			else if(InputEvent->iAction == 't')
+			{
+			   //printf ( "please input pagenum of Just shown\r\n" );
+			   //scanf("%d",&pageNum);
+			   showPointPage(InputEvent->iVal);
+			}
+			else
+			{
+				return 0;
+			}
 
-		if ( cOpr == 'n' )
-		{
-			ShowNextPage();
-		}
-		else if ( cOpr == 'u' )
-		{
-			ShowPrePage();
-		}
-		else if(cOpr == 't')
-		{
-           printf ( "please input pagenum of Just shown\r\n" );
-           scanf("%d",&pageNum);
-		   showPointPage(pageNum);
 
-		}
-		else
-		{
-			return 0;
+
 		}
 
-
-
+		
 
 
 	}
