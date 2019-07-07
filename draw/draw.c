@@ -58,6 +58,29 @@ int LineFeed ( int lcdY )
 
 }
 
+int FindAppointNode(int PageNum , PT_PageDesc P_PointNode)
+{
+    PT_PageDesc P_PageNode;
+
+   	P_PageNode = g_ptPageHead;
+
+	
+	while ( P_PageNode)
+	{
+		if ( P_PageNode->PageNum == PageNum )
+		{
+			 P_PointNode = P_PageNode;
+			 return 0;
+		}
+
+		P_PageNode = P_PageNode->nextPageDesc;
+	}
+
+    return -1;
+
+}
+	
+
 int RelocateFontPos ( PT_FontBitMap ptFontBitMap )
 {
 	int iLcdY;
@@ -244,9 +267,17 @@ int showPointPage ( int pageNum )
 {
    
 	int iError;
+	T_PageDesc T_PageNode;
 	PT_PageDesc P_PageNode;
 
-	P_PageNode = g_ptPageHead;
+    /*
+    if(FindAppointNode(pageNum,&T_PageNode) == -1)
+    {
+      return -1;
+	}
+    */
+
+    P_PageNode = g_ptPageHead;
 
 	
 	while ( P_PageNode)
@@ -259,12 +290,12 @@ int showPointPage ( int pageNum )
 		P_PageNode = P_PageNode->nextPageDesc;
 	}
 
+
 	iError = ShowOnePage ( P_PageNode->CurPageStart );
 
 	if ( iError == 0 )
 	{
 		g_ptCurPage = P_PageNode;
-
 
 	}
 

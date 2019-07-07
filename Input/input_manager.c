@@ -4,7 +4,7 @@
 #include <string.h>
 
 static PT_InputOpr g_ptInputOprHead;//输入链表表头
-static PT_InputEvent g_ptInputEvent;
+static T_InputEvent g_tInputEvent;
 
 static pthread_mutex_t g_tMutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  g_tConVar = PTHREAD_COND_INITIALIZER;
@@ -122,7 +122,7 @@ void ShowInputOpr(void)
 
 
 
-int InitInput(void)
+int InputInit(void)
 {
     int iError;
 

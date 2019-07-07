@@ -65,8 +65,10 @@ static int StdinGetInputEvent(PT_InputEvent ptInputEvent)
 	else if(c == 't')
 	{
         ptInputEvent->iAction = INPUT_VALUE_JUMP;  
-		printf ( "please input pagenum of Just shown\r\n" );
-		scanf("%d",&ptInputEvent->iAction);
+		printf ( "\r\n please input pagenum of Just shown\r\n" );
+		ptInputEvent->iVal  = fgetc(stdin) - 0x30; //fgetc 获取的是ascii码 输入2 得到0x32
+		
+		//scanf("%d",&ptInputEvent->iVal);
 	}
 	else
 	{

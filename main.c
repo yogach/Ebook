@@ -8,6 +8,9 @@
 #include "encoding_manager.h"
 #include "fonts_manager.h"
 
+#include <input_manager.h>
+
+
 /* ./show_file [-s Size] [-f freetype_font_file] [-h HZK] <text_file> */
 
 
@@ -103,6 +106,13 @@ int main ( int argc, char * * argv )
 		return -1;
 	}
 
+    iError =  InputInit();//初始化输入设备
+	if ( iError )
+	{
+		DBG_PRINTF ( "InputInit error!\n" );
+		return -1;
+	}
+
 
 	if ( bList )
 	{
@@ -115,6 +125,8 @@ int main ( int argc, char * * argv )
 		printf ( "supported Encoding:\n" );
 		ShowEncodingOpr();
 
+        printf ( "supported Input:\n" );
+		ShowInputOpr();
 		return 0;
 	}
 
@@ -136,6 +148,14 @@ int main ( int argc, char * * argv )
 		return -1;
 	}
 
+
+    iError =  AllInputDevicesInit(); //开启输入设备
+	if ( iError )
+	{
+		DBG_PRINTF ( "InputDevicesInit error!\n" );
+		return -1;
+	}
+
 	//ShowOnePage(buff);
 	ShowNextPage();
 
@@ -150,26 +170,24 @@ int main ( int argc, char * * argv )
 		
         if(GetDeviceInput(InputEvent) == 0)
         {
-			if ( InputEvent->iAction == 'n' )
+			if ( InputEvent->iAction == INPUT_VALUE_DOWN )
 			{
 				ShowNextPage();
 			}
-			else if ( InputEvent->iAction == 'u' )
+			else if ( InputEvent->iAction == INPUT_VALUE_UP )
 			{
 				ShowPrePage();
 			}
-			else if(InputEvent->iAction == 't')
+			else if(InputEvent->iAction == INPUT_VALUE_JUMP)
 			{
 			   //printf ( "please input pagenum of Just shown\r\n" );
 			   //scanf("%d",&pageNum);
-			   showPointPage(InputEvent->iVal);
+			   showPointPage((int)InputEvent->iVal);
 			}
-			else
+			else if(InputEvent->iAction == INPUT_VALUE_EXIT)
 			{
 				return 0;
 			}
-
-
 
 		}
 

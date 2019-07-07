@@ -34,8 +34,7 @@ typedef struct InputOpr {
 int RegisterInputOpr(PT_InputOpr ptInputOpr);
 void ShowInputOpr(void);
 int GetDeviceInput(PT_InputEvent ptInputEvent);
-
-
+int InputInit(void);
 
 int StdinInit(void);
 
