@@ -58,28 +58,29 @@ int LineFeed ( int lcdY )
 
 }
 
-int FindAppointNode(int PageNum , PT_PageDesc P_PointNode)
+PT_PageDesc FindAppointNode ( int PageNum )
 {
-    PT_PageDesc P_PageNode;
+	PT_PageDesc P_PageNode;
 
-   	P_PageNode = g_ptPageHead;
+	P_PageNode = g_ptPageHead;
 
-	
-	while ( P_PageNode)
+
+	while ( P_PageNode )
 	{
 		if ( P_PageNode->PageNum == PageNum )
 		{
-			 P_PointNode = P_PageNode;
-			 return 0;
+			//P_PointNode = P_PageNode;
+			//memcpy(P_PointNode,P_PageNode,sizeof(T_PageDesc));
+			return P_PageNode;
 		}
 
 		P_PageNode = P_PageNode->nextPageDesc;
 	}
 
-    return -1;
+	return -1;
 
 }
-	
+
 
 int RelocateFontPos ( PT_FontBitMap ptFontBitMap )
 {
@@ -254,32 +255,42 @@ void PutInPageList ( PT_PageDesc P_PageNew )
 		}
 
 		P_PageNew->PageNum = P_PageNode->PageNum+1;
-		
+
 		P_PageNode->nextPageDesc = P_PageNew; //将新节点放入链表的末尾
 		P_PageNew->prePageDesc = P_PageNode;	 //将最后第二个节点链接为最后一个节点的前一个节点
 	}
 
-    DBG_PRINTF ( "Cur Paga Num:%d\r\n",P_PageNew->PageNum );
+	DBG_PRINTF ( "Cur Paga Num:%d\r\n",P_PageNew->PageNum );
 
 }
 
 int showPointPage ( int pageNum )
 {
-   
+
 	int iError;
-	T_PageDesc T_PageNode;
+	//T_PageDesc T_PageNode;
 	PT_PageDesc P_PageNode;
 
-    /*
-    if(FindAppointNode(pageNum,&T_PageNode) == -1)
-    {
-      return -1;
+    P_PageNode = FindAppointNode ( pageNum );
+
+	if ( P_PageNode == -1 )
+	{
+		return -1;
 	}
-    */
 
-    P_PageNode = g_ptPageHead;
 
-	
+	iError = ShowOnePage ( P_PageNode->CurPageStart );
+
+
+	if ( iError == 0 )
+	{
+		g_ptCurPage = P_PageNode;
+
+	}
+
+	/*
+
+	 P_PageNode = g_ptPageHead;
 	while ( P_PageNode)
 	{
 		if ( P_PageNode->PageNum == pageNum )
@@ -290,14 +301,22 @@ int showPointPage ( int pageNum )
 		P_PageNode = P_PageNode->nextPageDesc;
 	}
 
-
 	iError = ShowOnePage ( P_PageNode->CurPageStart );
 
-	if ( iError == 0 )
-	{
-		g_ptCurPage = P_PageNode;
 
-	}
+	if ( iError == 0 )
+		{
+			g_ptCurPage = P_PageNode;
+
+		}
+
+
+	*/
+
+
+
+
+
 
 	return 0;
 
