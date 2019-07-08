@@ -77,7 +77,7 @@ PT_PageDesc FindAppointNode ( int PageNum )
 		P_PageNode = P_PageNode->nextPageDesc;
 	}
 
-	return -1;
+	return NULL;
 
 }
 
@@ -273,7 +273,7 @@ int showPointPage ( int pageNum )
 
     P_PageNode = FindAppointNode ( pageNum );
 
-	if ( P_PageNode == -1 )
+	if ( P_PageNode == NULL )
 	{
 		return -1;
 	}
