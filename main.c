@@ -24,6 +24,7 @@ int main (int argc,char * *argv)
 	unsigned int dwFontSize = 16;					//字符大小
 	int bList = 0;
 
+	PT_InputEvent InputEvent;
 
 	//处理命令行指令
 	//指令使用例子./Ebook -s 24 -d fb -h ./MSYH.TTF ./utf8_novel.txt
@@ -130,7 +131,7 @@ int main (int argc,char * *argv)
 		printf ("supported Input:\n");
 		ShowInputOpr ();
 
-		printf ("supported Debug:\n")
+		printf ("supported Debug:\n");
 		ShowDebugOpr ();
 
 		return 0;
@@ -176,8 +177,6 @@ int main (int argc,char * *argv)
 	while (1)
 	{
 
-		PT_InputEvent InputEvent;
-
 		if (GetDeviceInput (InputEvent) == 0)
 		{
 			if (InputEvent->iAction == INPUT_VALUE_DOWN)
@@ -200,8 +199,6 @@ int main (int argc,char * *argv)
 			}
 
 		}
-
-
 
 
 	}

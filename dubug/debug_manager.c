@@ -70,7 +70,7 @@ PT_DebugOpr GetDebugOpr (char * pcName)
 
 int SetDbgLevel (char * strBuf)
 {
-
+  return 0;
 
 }
 
@@ -84,7 +84,7 @@ int SetDbgLevel (char * strBuf)
 int SetDbgChanel (char * strBuf)
 {
 	char * pStrTmp;
-	char * pStrName;
+	char  StrName[20];
 	PT_DebugOpr pt_tmp;
 
 
@@ -96,10 +96,10 @@ int SetDbgChanel (char * strBuf)
 	}
 	else 
 	{
-		pStrName = strncmp (pStrName,strBuf,pStrTmp - strBuf); //获取名字
-		pStrName[pStrTmp - strBuf] = '0';
+	    strncmp (StrName,strBuf,pStrTmp - strBuf); //获取名字
+		StrName[pStrTmp - strBuf] = '0';
 
-		pt_tmp = GetDebugOpr (pStrName);
+		pt_tmp = GetDebugOpr (StrName);
 		if (pt_tmp)
 		{
 			pt_tmp->isCanUse = pStrTmp[1]-0x30;
@@ -117,6 +117,7 @@ int DebugPrint (const char * pcFormat,...)
 {
 	va_list tArg;
 	char strTmpBuf[1000];
+	int iNum;
 	PT_DebugOpr ptTmp;
 
 
@@ -131,12 +132,13 @@ int DebugPrint (const char * pcFormat,...)
 	//执行debug链表中的打印语句
 	while (ptTmp)
 	{
-		if ((ptTmp->DebugPrint) && (ptTmp->isCanUse)) ptTmp->DebugPrint (strTmpBuf);
+		if ((ptTmp->DebugPrint !=NULL) && (ptTmp->isCanUse)) ptTmp->DebugPrint (strTmpBuf);
 
 		ptTmp = ptTmp->ptNext;
 
 	}
 
+    return 0;
 }
 
 

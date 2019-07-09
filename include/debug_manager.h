@@ -31,5 +31,9 @@ int DebugInit(void);
 int DebugPrint(const char *pcFormat, ...);
 int InitDebugChanel(void);
 
+int StdoutInit(void);
+int NetPrintInit (void);
+
+
 #endif /* _DEBUG_MANAGER_H */
   

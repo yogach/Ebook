@@ -30,8 +30,8 @@ static T_PrintBuff g_tPrintBuff;
 static int g_iSocketServer;
 static int g_iHaveConnet;
 
-static struct sockaddr g_tSocketServerAddr; //保存服务器IP
-static struct sockaddr g_tSocketClientAddr; //保存客户端ip 
+static struct sockaddr_in g_tSocketServerAddr; //保存服务器IP
+static struct sockaddr_in g_tSocketClientAddr; //保存客户端ip 
 static pthread_t g_tSendTreadID;
 static pthread_t g_tRecvTreadID;
 
@@ -103,8 +103,8 @@ static int GetData (char * pcVal)
 static void * NetDbgSendTreadFunction (void * pVoid)
 {
 	int iSendLen,i;
-	socklen_t iAddrLen;
-	char * strTmpBuf[512];
+	int iAddrLen;
+	char strTmpBuf[512];
 	char tmpchar;
 
 	while (1)
@@ -125,6 +125,7 @@ static void * NetDbgSendTreadFunction (void * pVoid)
 			}
 
 			//向客户端发送数据
+			iAddrLen = sizeof(struct sockaddr);
 			iSendLen = sendto (g_iSocketServer,strTmpBuf,i,0,
 				(const struct sockaddr *) &g_tSocketClientAddr,iAddrLen);
 
@@ -144,7 +145,7 @@ static void * NetDbgRecvTreadFunction (void * pVoid)
 	int iRecvLen;
 
 	struct sockaddr_in tSocketClientAddr;
-	char * ucRecvBuf[1000];
+	char ucRecvBuf[1000];
 
 
 	while (1)
@@ -164,6 +165,11 @@ static void * NetDbgRecvTreadFunction (void * pVoid)
 			{
 				g_tSocketClientAddr = tSocketClientAddr; //得到客户端IP
 				g_iHaveConnet = 1;					//有客户端连接了
+
+	 			iAddrLen = sizeof(struct sockaddr);
+				sendto (g_iSocketServer,"revcmd",6,0,
+					(const struct sockaddr *) &g_tSocketClientAddr,iAddrLen);
+				
 			}
 			else 
 			{
@@ -232,6 +238,8 @@ static int NetDbgInit (void)
 	pthread_create (&g_tSendTreadID,NULL,NetDbgSendTreadFunction,NULL);
 	pthread_create (&g_tRecvTreadID,NULL,NetDbgRecvTreadFunction,NULL);
 
+	return 0;
+
 }
 
 
@@ -239,25 +247,27 @@ static int NetDbgExit (void)
 {
 	/* 关闭socket,... */
 	close (g_iSocketServer);
-	free (g_tPrintBuff.Buff);						//释放分配的空间
+	free (g_tPrintBuff.Buff);//释放分配的空间
+	return 0;
 }
 
 
 //打印函数-先将打印数据放入缓冲区中
 static int NetDbgPrint (char * strData)
 {
+	int i ;
 
-	for (int i = 0; i < strlen (strData); i++)
+	for ( i= 0; i < strlen (strData); i++)
 	{
-		if (PutData (strData + i) == -1)
-			return - 1; //缓存区已满
+		if (PutData (strData[i]) == -1)
+			break;//return - 1; //缓存区已满
 	}
 
 	//每次有新数据打印时，唤醒一次发送线程，检查是否有客户端连接
 	pthread_mutex_lock (&g_tNetDbgSendMutex);
 	pthread_cond_signal (&g_tNetDbgSendConVar);
 	pthread_mutex_unlock (&g_tNetDbgSendMutex);
-
+   return 0;
 
 }
 
