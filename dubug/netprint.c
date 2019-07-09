@@ -159,7 +159,7 @@ static void * NetDbgRecvTreadFunction (void * pVoid)
 
 			ucRecvBuf[iRecvLen] = '\0'; 			//设置结束符
 
-
+			/*使用setclient设置开启*/
 			if (strcmp (ucRecvBuf,"setclient") == 0)
 			{
 				g_tSocketClientAddr = tSocketClientAddr; //得到客户端IP
@@ -181,6 +181,7 @@ static void * NetDbgRecvTreadFunction (void * pVoid)
 static int NetDbgInit (void)
 {
 	int iRet;
+	int opt = 1; 
 
 	g_iSocketServer = socket (AF_INET,SOCK_DGRAM,0); //设置为UDP传输
 
@@ -195,6 +196,18 @@ static int NetDbgInit (void)
 	g_tSocketServerAddr.sin_port = htons (SERVER_PORT); /* host to net, short */
 	g_tSocketServerAddr.sin_addr.s_addr = INADDR_ANY;
 	memset (g_tSocketServerAddr.sin_zero,0,8);
+
+
+    //使用setsockopt函数可以保证端口可被重复绑定
+    iRet = setsockopt(g_iSocketServer, SOL_SOCKET,SO_REUSEADDR,   
+    				(const void *)&opt, sizeof(opt) );	
+	if (-1 == iRet)
+	{
+		printf("set sock option error!\n");
+		close(g_iSocketServer);
+		return -1;
+	}
+
 
 	//绑定socket与端口
 	iRet = bind (g_iSocketServer,(const struct sockaddr *) &g_tSocketServerAddr,

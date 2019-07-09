@@ -371,6 +371,8 @@ int ShowNextPage ( void )
 
 
 	}
+
+	return 0;
 }
 
 int ShowPrePage ( void )
