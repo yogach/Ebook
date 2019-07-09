@@ -105,7 +105,7 @@ static void * NetDbgSendTreadFunction (void * pVoid)
 	int iSendLen,i;
 	socklen_t iAddrLen;
 	char * strTmpBuf[512];
-    char tmpchar;
+	char tmpchar;
 
 	while (1)
 	{
@@ -114,11 +114,11 @@ static void * NetDbgSendTreadFunction (void * pVoid)
 		pthread_cond_wait (&g_tNetDbgSendConVar,&g_tNetDbgSendMutex);
 		pthread_mutex_unlock (&g_tNetDbgSendMutex);
 
-		while (g_iHaveConnet && !isEmpty ()) //将缓冲区中的数据全部打印掉
+		while (g_iHaveConnet && !isEmpty ()) //将缓冲区中的数据全部打印到客户端上
 		{
 			i	= 0;
 
-			while ((i < 512) && (0==GetData (&tmpchar)))
+			while ((i < 512) && (0 == GetData (&tmpchar)))
 			{
 				strTmpBuf[i] = tmpchar;
 				i++;
@@ -151,6 +151,7 @@ static void * NetDbgRecvTreadFunction (void * pVoid)
 	{
 		iAddrLen = sizeof (struct sockaddr);
 
+		//接收客户端信息
 		iRecvLen = recvfrom (g_iSocketServer,ucRecvBuf,999,0,(struct sockaddr *) &tSocketClientAddr,&iAddrLen);
 
 		if (iRecvLen > 0)
@@ -161,16 +162,13 @@ static void * NetDbgRecvTreadFunction (void * pVoid)
 
 			if (strcmp (ucRecvBuf,"setclient") == 0)
 			{
-				g_tSocketClientAddr = tSocketClientAddr;
+				g_tSocketClientAddr = tSocketClientAddr; //得到客户端IP
 				g_iHaveConnet = 1;					//有客户端连接了
 			}
 			else 
 			{
 
 			}
-
-
-
 
 
 		}
