@@ -33,7 +33,7 @@ obj-y += draw/
 obj-y += encoding/
 obj-y += fonts/
 obj-y += Input/
-
+obj-y += dubug/
 
 all : 
 	make -C ./ -f $(TOPDIR)/Makefile.build
