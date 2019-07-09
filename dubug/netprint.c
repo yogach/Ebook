@@ -1,6 +1,7 @@
+
 #include <config.h>
 #include <debug_manager.h>
-#include <sys/types.h>          /* See NOTES */
+#include <sys/types.h>					/* See NOTES */
 #include <sys/socket.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -12,136 +13,257 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#define SERVER_PORT 5678
-#define PRINT_BUF_SIZE   (16*1024)
+#define SERVER_PORT 			5678
+#define PRINT_BUF_SIZE			(16*1024)
 
 typedef struct PrintBuff
 {
-	unsigned char * Buff;
-    unsigned int ReadPos;
-	unsigned int WritePos;
-	
-}T_PrintBuff;
+unsigned char * Buff;
+unsigned int	ReadPos;
+unsigned int	WritePos;
+
+} T_PrintBuff;
 
 
 static T_PrintBuff g_tPrintBuff;
 
 static int g_iSocketServer;
-static struct sockaddr g_tSocketServerAddr;
+static int g_iHaveConnet;
 
-
+static struct sockaddr g_tSocketServerAddr; //保存服务器IP
+static struct sockaddr g_tSocketClientAddr; //保存客户端ip 
 static pthread_t g_tSendTreadID;
 static pthread_t g_tRecvTreadID;
 
 
-static int isFull(void)
+static pthread_mutex_t g_tNetDbgSendMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t g_tNetDbgSendConVar = PTHREAD_COND_INITIALIZER;
+
+
+//判断缓冲区是否满了
+static int isFull (void)
 {
-  if(g_tPrintBuff.WritePos )
+	if ((g_tPrintBuff.WritePos + 1) == g_tPrintBuff.ReadPos)
+		return 1;
+
+	else 
+		return 0;
 
 
 }
 
-static int isEmpty(void)
+
+//缓冲区是否为空
+static int isEmpty (void)
 {
-  if(g_tPrintBuff.ReadPos == g_tPrintBuff.WritePos)
-   return 1;
-  else
-   return 0;
+	if (g_tPrintBuff.ReadPos == g_tPrintBuff.WritePos)
+		return 1;
+
+	else 
+		return 0;
 
 }
 
 
-static int PutData(char cVal)
+static int PutData (char cVal)
 {
-	
-}
+	if (isFull ())
+	{
+		return - 1;
+	}
+	else 
+	{
+		g_tPrintBuff.Buff[g_tPrintBuff.WritePos] = cVal;
 
-static int GetData(char *pcVal)
-{
-	
-}
-
-
-static void *NetDbgSendTreadFunction(void *pVoid)
-{
-
-  while(1)
-  	{}
-
-}
-
-static void *NetDbgRecvTreadFunction(void *pVoid)
-{
-	while(1)
-  	{}
+		//当超出缓冲区最大长度时，归0
+		g_tPrintBuff.WritePos = (g_tPrintBuff.WritePos + 1) % PRINT_BUF_SIZE;
+		return 0;
+	}
 }
 
 
-static int NetDbgInit(void)
+static int GetData (char * pcVal)
 {
-    int iRet;
+	if (isEmpty ())
+	{
+		return - 1;
+	}
+	else 
+	{
+		*pcVal = g_tPrintBuff.Buff[g_tPrintBuff.ReadPos];
 
-	g_iSocketServer = socket(AF_INET, SOCK_DGRAM, 0);//设置为UDP传输
+		g_tPrintBuff.ReadPos = (g_tPrintBuff.ReadPos + 1) % PRINT_BUF_SIZE;
+		return 0;
+	}
 
-    if(g_iSocketServer == -1 )
-    {
-      printf("socket init error\r\n");
-	  return -1;
+
+}
+
+
+static void * NetDbgSendTreadFunction (void * pVoid)
+{
+	int iSendLen,i;
+	socklen_t iAddrLen;
+	char * strTmpBuf[512];
+    char tmpchar;
+
+	while (1)
+	{
+		//唤醒线程
+		pthread_mutex_lock (&g_tNetDbgSendMutex);
+		pthread_cond_wait (&g_tNetDbgSendConVar,&g_tNetDbgSendMutex);
+		pthread_mutex_unlock (&g_tNetDbgSendMutex);
+
+		while (g_iHaveConnet && !isEmpty ()) //将缓冲区中的数据全部打印掉
+		{
+			i	= 0;
+
+			while ((i < 512) && (0==GetData (&tmpchar)))
+			{
+				strTmpBuf[i] = tmpchar;
+				i++;
+			}
+
+			//向客户端发送数据
+			iSendLen = sendto (g_iSocketServer,strTmpBuf,i,0,
+				(const struct sockaddr *) &g_tSocketClientAddr,iAddrLen);
+
+
+
+		}
+
 
 	}
 
-	g_tSocketServerAddr.sin_family		= AF_INET;
-	g_tSocketServerAddr.sin_port		= htons(SERVER_PORT);  /* host to net, short */
+}
+
+
+static void * NetDbgRecvTreadFunction (void * pVoid)
+{
+	socklen_t iAddrLen;
+	int iRecvLen;
+
+	struct sockaddr_in tSocketClientAddr;
+	char * ucRecvBuf[1000];
+
+
+	while (1)
+	{
+		iAddrLen = sizeof (struct sockaddr);
+
+		iRecvLen = recvfrom (g_iSocketServer,ucRecvBuf,999,0,(struct sockaddr *) &tSocketClientAddr,&iAddrLen);
+
+		if (iRecvLen > 0)
+		{
+
+			ucRecvBuf[iRecvLen] = '\0'; 			//设置结束符
+
+
+			if (strcmp (ucRecvBuf,"setclient") == 0)
+			{
+				g_tSocketClientAddr = tSocketClientAddr;
+				g_iHaveConnet = 1;					//有客户端连接了
+			}
+			else 
+			{
+
+			}
+
+
+
+
+
+		}
+
+
+	}
+}
+
+
+static int NetDbgInit (void)
+{
+	int iRet;
+
+	g_iSocketServer = socket (AF_INET,SOCK_DGRAM,0); //设置为UDP传输
+
+	if (g_iSocketServer == -1)
+	{
+		printf ("socket init error\r\n");
+		return - 1;
+
+	}
+
+	g_tSocketServerAddr.sin_family = AF_INET;
+	g_tSocketServerAddr.sin_port = htons (SERVER_PORT); /* host to net, short */
 	g_tSocketServerAddr.sin_addr.s_addr = INADDR_ANY;
-	memset(g_tSocketServerAddr.sin_zero, 0, 8);
+	memset (g_tSocketServerAddr.sin_zero,0,8);
 
 	//绑定socket与端口
-	iRet = bind(g_iSocketServer, (const struct sockaddr *)&g_tSocketServerAddr, sizeof(struct sockaddr));
+	iRet = bind (g_iSocketServer,(const struct sockaddr *) &g_tSocketServerAddr,
+		sizeof (struct sockaddr));
+
 	if (-1 == iRet)
 	{
-		printf("bind error!\n");
-		return -1;
+		printf ("bind error!\n");
+		return - 1;
 	}
 
-    g_tPrintBuff.Buff = malloc(PRINT_BUF_SIZE);
-	if(g_tPrintBuff.Buff == NULL)
+	g_tPrintBuff.Buff = malloc (PRINT_BUF_SIZE);
+
+	if (g_tPrintBuff.Buff == NULL)
 	{
-		printf("malloc printfbuff error!\n");
-		close(g_iSocketServer);
-		return -1;
+		printf ("malloc printfbuff error!\n");
+		close (g_iSocketServer);
+		return - 1;
 	}
-	
+
 	//创建发送及接收线程
-	pthread_create(&g_tSendTreadID,NULL,NetDbgSendTreadFunction,NULL);
-	pthread_create(&g_tRecvTreadID,NULL,NetDbgRecvTreadFunction,NULL);
-    
+	pthread_create (&g_tSendTreadID,NULL,NetDbgSendTreadFunction,NULL);
+	pthread_create (&g_tRecvTreadID,NULL,NetDbgRecvTreadFunction,NULL);
+
 }
 
-static int NetDbgExit(void)
+
+static int NetDbgExit (void)
 {
-  /* 关闭socket,... */
-  close(g_iSocketServer);
-  free(g_tPrintBuff.Buff);
-
+	/* 关闭socket,... */
+	close (g_iSocketServer);
+	free (g_tPrintBuff.Buff);						//释放分配的空间
 }
 
-static int NetDbgPrint(char *strData)
+
+//打印函数-先将打印数据放入缓冲区中
+static int NetDbgPrint (char * strData)
 {
-	
-	
+
+	for (int i = 0; i < strlen (strData); i++)
+	{
+		if (PutData (strData + i) == -1)
+			return - 1; //缓存区已满
+	}
+
+	//每次有新数据打印时，唤醒一次发送线程，检查是否有客户端连接
+	pthread_mutex_lock (&g_tNetDbgSendMutex);
+	pthread_cond_signal (&g_tNetDbgSendConVar);
+	pthread_mutex_unlock (&g_tNetDbgSendMutex);
+
+
 }
 
 
-static T_DebugOpr g_tNetDbgOpr = {
-	.name       = "netprint",
-	.isCanUse   = 1,
-	.DebugInit  = NetDbgInit,
-	.DebugExit  = NetDbgExit,
+static T_DebugOpr g_tNetDbgOpr =
+{
+	.name = "netprint",
+	.isCanUse = 1,
+	.DebugInit = NetDbgInit,
+	.DebugExit = NetDbgExit,
 	.DebugPrint = NetDbgPrint,
 };
 
-int NetPrintInit(void)
+
+int NetPrintInit (void)
 {
-	return RegisterDebugOpr(&g_tNetDbgOpr);
+	return RegisterDebugOpr (&g_tNetDbgOpr);
 }
+
 
