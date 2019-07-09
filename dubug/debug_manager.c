@@ -75,8 +75,39 @@ int SetDbgLevel (char * strBuf)
 }
 
 
+/*
+ * stdout=0			   : 关闭stdout打印
+ * stdout=1			   : 打开stdout打印
+ * netprint=0		   : 关闭netprint打印
+ * netprint=1		   : 打开netprint打印
+ */
 int SetDbgChanel (char * strBuf)
 {
+	char * pStrTmp;
+	char * pStrName;
+	PT_DebugOpr pt_tmp;
+
+
+	//在字符串 strBuf 中查找字符'='，返回字符'='第一次在字符串strBuf中出现的位置（指针）
+	pStrTmp = strchr (strBuf,'=');
+	if (pStrTmp == NULL)
+	{
+		return - 1;
+	}
+	else 
+	{
+		pStrName = strncmp (pStrName,strBuf,pStrTmp - strBuf); //获取名字
+		pStrName[pStrTmp - strBuf] = '0';
+
+		pt_tmp = GetDebugOpr (pStrName);
+		if (pt_tmp)
+		{
+			pt_tmp->isCanUse = pStrTmp[1]-0x30;
+		}
+		
+	}
+	return 0;
+
 
 
 }
@@ -88,19 +119,19 @@ int DebugPrint (const char * pcFormat,...)
 	char strTmpBuf[1000];
 	PT_DebugOpr ptTmp;
 
-	
+
 	va_start (tArg,pcFormat);
-	iNum = vsprintf (strTmpBuf,pcFormat,tArg); //获取可变参数中的值
+	iNum = vsprintf (strTmpBuf,pcFormat,tArg);		//获取可变参数中的值
 	va_end (tArg);
 	strTmpBuf[iNum] = '\0';
 
 
 	ptTmp = g_ptDebugOprHead;
-    //执行debug链表中的打印语句
+
+	//执行debug链表中的打印语句
 	while (ptTmp)
 	{
-		if ((ptTmp->DebugPrint)&&(ptTmp->isCanUse))
-			ptTmp->DebugPrint (strTmpBuf);
+		if ((ptTmp->DebugPrint) && (ptTmp->isCanUse)) ptTmp->DebugPrint (strTmpBuf);
 
 		ptTmp = ptTmp->ptNext;
 

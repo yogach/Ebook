@@ -159,7 +159,7 @@ static void * NetDbgRecvTreadFunction (void * pVoid)
 
 			ucRecvBuf[iRecvLen] = '\0'; 			//设置结束符
 
-			/*使用setclient设置开启*/
+			/*客户端发送setclient设置开始接收*/
 			if (strcmp (ucRecvBuf,"setclient") == 0)
 			{
 				g_tSocketClientAddr = tSocketClientAddr; //得到客户端IP
@@ -167,7 +167,7 @@ static void * NetDbgRecvTreadFunction (void * pVoid)
 			}
 			else 
 			{
-
+                SetDbgChanel(ucRecvBuf);
 			}
 
 
