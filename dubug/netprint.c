@@ -43,12 +43,11 @@ static pthread_cond_t g_tNetDbgSendConVar = PTHREAD_COND_INITIALIZER;
 //≈–∂œª∫≥Â«¯ «∑Ò¬˙¡À
 static int isFull (void)
 {
-	if ((g_tPrintBuff.WritePos + 1) == g_tPrintBuff.ReadPos)
+	if ((g_tPrintBuff.WritePos + 1) % PRINT_BUF_SIZE == g_tPrintBuff.ReadPos)
 		return 1;
 
 	else 
 		return 0;
-
 
 }
 
