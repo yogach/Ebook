@@ -5,6 +5,7 @@
 
 #define INPUT_TYPE_STDIN        0 //±Í◊º ‰»Î
 #define INPUT_TYPE_TOUCHSCREEN  1
+#define INPUT_TYPE_KEY          2
 
 #define INPUT_VALUE_UP          0   
 #define INPUT_VALUE_DOWN        1

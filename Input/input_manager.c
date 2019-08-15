@@ -42,7 +42,7 @@ static void* InputEventTreadFunction(void* pVoid)
    //定义函数指针
    int (*GetInputEvent)(PT_InputEvent ptInputEvent);
 
-   (int (*)(PT_InputEvent))pVoid;
+  // (int (*)(PT_InputEvent))pVoid;
 
    GetInputEvent = (int(*)(PT_InputEvent))pVoid;//转化void*指针
 
@@ -51,7 +51,7 @@ static void* InputEventTreadFunction(void* pVoid)
    {
          if( 0 == GetInputEvent(&tInputEvent)) //等待输入事件
          {
-			 /* 唤醒主线程, 把tInputEvent的值赋给一个全局变量 */
+			 /*动作：唤醒主线程, 把tInputEvent的值赋给一个全局变量 */
 			 /* 访问临界资源前，先获得互斥量 */
 			 pthread_mutex_lock(&g_tMutex);
 			 g_tInputEvent = tInputEvent;
@@ -79,10 +79,10 @@ int AllInputDevicesInit(void)
 
 	while (ptTmp)
 	{
-       if(g_ptInputOprHead->DeviceInit() == 0)
+       if(ptTmp->DeviceInit() == 0)//执行各设备的初始化函数
        {
-       	   //创建线程 将各设备的GetInputEvent 作为形参传入
-		   pthread_create(&g_ptInputOprHead->tTreadID,NULL,InputEventTreadFunction,ptTmp->GetInputEvent);
+       	   //创建线程 将各设备的GetInputEvent 作为形参传入 
+		   pthread_create(&ptTmp->tTreadID,NULL,InputEventTreadFunction,ptTmp->GetInputEvent);
            iError = 0;
 	   }
 	   ptTmp = ptTmp->ptNext;
