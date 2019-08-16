@@ -11,7 +11,7 @@
 #define COLOR_FOREGROUND   0x514438  /* ºÖÉ«×ÖÌå */
 
 //#define DBG_PRINTF(...)  
-#define DBG_PRINTF DebugPrint
+#define DBG_PRINTF(fmt,...) DebugPrint("%s[%d]:"fmt,__FILE__,__LINE__,##__VA_ARGS__)
 
 
 #endif /* _CONFIG_H */

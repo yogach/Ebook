@@ -127,6 +127,7 @@ int InputInit(void)
     int iError;
 
 	iError = StdinInit();
+    iError |= KeyInit();
 
 	return iError;
 

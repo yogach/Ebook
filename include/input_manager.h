@@ -40,6 +40,8 @@ int AllInputDevicesInit(void);
 int InputInit(void);
 
 int StdinInit(void);
+int KeyInit(void);
+
 
 
 #endif /* _INPUT_MANAGER_H */
