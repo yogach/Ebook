@@ -82,9 +82,11 @@ int AllInputDevicesInit(void)
        if(ptTmp->DeviceInit() == 0)//执行各设备的初始化函数
        {
        	   //创建线程 将各设备的GetInputEvent 作为形参传入 
-		   pthread_create(&ptTmp->tTreadID,NULL,InputEventTreadFunction,ptTmp->GetInputEvent);
-           iError = 0;
+		   iError = pthread_create(&ptTmp->tTreadID,NULL,InputEventTreadFunction,ptTmp->GetInputEvent);
+		   if(!iError)
+		   	DBG_PRINTF(" create %s pthread Success...\r\n",ptTmp->name);
 	   }
+	   
 	   ptTmp = ptTmp->ptNext;
 	}
 
@@ -126,8 +128,10 @@ int InputInit(void)
 {
     int iError;
 
-	iError = StdinInit();
-    iError |= KeyInit();
+	iError = KeyInit();
+
+	iError |= StdinInit();
+   
 
 	return iError;
 

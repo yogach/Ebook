@@ -3,7 +3,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
-
+#include <config.h>
 
 static int StdinDevInit(void)
 {
@@ -46,9 +46,14 @@ static int StdinGetInputEvent(PT_InputEvent ptInputEvent)
 	
 	/* 处理数据 */
 	ptInputEvent->iType = INPUT_TYPE_STDIN;
+
+	//DBG_PRINTF("StdinGetInputEvent\r\n");
+
 	
 	c = fgetc(stdin);  /* 会休眠直到有输入 阻塞方式读取一直等待直到有返回 */
 	gettimeofday(&ptInputEvent->tTime, NULL);//获取当前精确时间写入tTime中
+
+	//DBG_PRINTF("GetStdin\r\n");
 	
 	if (c == 'u')
 	{

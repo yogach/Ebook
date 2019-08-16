@@ -27,7 +27,8 @@ int main (int argc,char * *argv)
 	PT_InputEvent InputEvent;
 
 	//处理命令行指令
-	//指令使用例子./Ebook -s 24 -d fb -h ./MSYH.TTF ./utf8_novel.txt
+	//./Ebook -s 24 -d fb -h ./MSYH.TTF ./utf8_novel.txt 启动电子书显示
+	//./Ebook -l 显示支持的输入设备
 	while ((iError = getopt (argc,argv,"ls:f:h:d:")) != -1)
 	{
 		switch (iError)
@@ -195,6 +196,7 @@ int main (int argc,char * *argv)
 			}
 			else if (InputEvent->iAction == INPUT_VALUE_EXIT)
 			{
+			    DBG_PRINTF("close Ebook....\r\n");
 				return 0;
 			}
 
