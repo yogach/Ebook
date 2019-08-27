@@ -41,6 +41,7 @@ int InputInit(void);
 
 int StdinInit(void);
 int KeyInit(void);
+int TouchScreenInit(void);
 
 
 

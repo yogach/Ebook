@@ -149,7 +149,7 @@ int main (int argc,char * *argv)
 	}
 
 
-	iError = SetTextAttr (acHzkFile,acDisplay,dwFontSize);
+	iError = SetTextAttr (acHzkFile,acDisplay,dwFontSize);//设置字库文件 显示设备 字体大小
 	if (iError)
 	{
 		DBG_PRINTF ("SetTextAttr error!\n");
@@ -157,7 +157,7 @@ int main (int argc,char * *argv)
 	}
 
 
-	iError = AllInputDevicesInit ();				//开启输入设备
+	iError = AllInputDevicesInit ();				//初始化所有输入设备
 	if (iError)
 	{
 		DBG_PRINTF ("InputDevicesInit error!\n");

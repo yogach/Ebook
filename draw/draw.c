@@ -20,10 +20,6 @@
 #include <string.h>
 
 
-
-
-
-
 //static PT_FontOpr gUserFreeTypeFile;
 static PT_DispOpr gUserDisPlayMode;
 static PT_EncodingOpr gUserEncodingOper;
@@ -171,6 +167,22 @@ int OpenTextFile ( char* pcfileName )
 
 }
 
+int GetDispResolution ( int* pXres,int* pYres )
+{
+	if ( gUserDisPlayMode )
+	{
+		*pXres = gUserDisPlayMode->iXres;
+		*pYres = gUserDisPlayMode->iYres;
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
+
+
+
+}
 
 
 int SetTextAttr ( char* HzkFile,char* DisplayMode, unsigned int Size )
@@ -271,7 +283,7 @@ int showPointPage ( int pageNum )
 	//T_PageDesc T_PageNode;
 	PT_PageDesc P_PageNode;
 
-    P_PageNode = FindAppointNode ( pageNum );
+	P_PageNode = FindAppointNode ( pageNum );
 
 	if ( P_PageNode == NULL )
 	{

@@ -21,6 +21,7 @@ int ShowOneFont ( PT_FontBitMap ptFontBitMap );
 int ShowNextPage(void);
 int ShowPrePage ( void );
 int showPointPage ( int pageNum );
+int GetDispResolution ( int* pXres,int* pYres );
 
 
 #endif /* _DRAW_H */

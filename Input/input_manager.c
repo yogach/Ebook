@@ -132,7 +132,8 @@ int InputInit(void)
 
 	iError |= StdinInit();
    
-
+    iError |= TouchScreenInit();
+	
 	return iError;
 
 }
